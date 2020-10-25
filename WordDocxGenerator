@@ -1,0 +1,179 @@
+const docx = require("docx");
+const fs = require("fs");
+//import * as fs from "fs";
+//import { Document, Packer, Paragraph, TextRun } from "docx";
+const { BorderStyle, Table, TableRow, TableCell, Paragraph, Packer, TextRun, Media, List } = docx;
+// Create document
+const doc = new docx.Document();
+
+const docMainHeader = "Анализ технического состояния и возрастная структура линий электропередачи и подстанций";
+
+        //for every table
+        const tableFirstRowFirstCell = "Протяженность действующих ВЛ и КЛ (в одноцепном исчислении), км";
+        const tableSecondRowFirstCell = "Количество и суммарная установленная мощность ПС, шт./МВА";
+        const getSecondCell = (fLenth, sLength) => `ВЛ - ${fLenth} КЛ - ${sLength}`;
+        const getFourthCell = (ssCount, ssPower) => `${ssCount}/${ssPower}`;
+
+
+        //company paragraph
+        const docCompanyNameOne = "Сетевая компания 1";
+        const getFirstCompPar = (name) => `Протяженность ВЛ 110 кВ и КЛ 110 кВ, количество и суммарная мощность ПС 110 кВ, находящихся в собственности ${name}}, по состоянию на 01.01.2019 г. составили:`;
+        const getSecondCompPar = (name) => `Далее приведена возрастная структура линий электропередачи и подстанций 110 кВ ${name} по состоянию на {01.01.2019} г. с разбивкой по электросетевым предприятиям.`
+
+        //firm parapraph
+        const docFirmNameOne = "Сетевое предприятие 1";
+        const getFirmHeader = (comp, firm) => `Филиал ${comp} ${firm}`;
+        const getFirstFirmPar = (name) => `Протяженность ВЛ 110 кВ и КЛ 110 кВ, количество и суммарная мощность ПС 110 кВ, обслуживаемых ${name} по состоянию на 01.01.2019 г. составили:`;
+        const getSecondFirmPar = (name) => `Анализ технического состояния электросетевых объектов напряжением 110 кВ ${name} показал:`;
+        //here's a list
+        const getFirstListItem = () => `15 подстанций (28,8% от общего числа ПС 110 кВ) отработали более 50 лет;`;
+        const getSecondListItem = () => `122 МВА трансформаторной мощности (3,6% от общей трансформаторной мощности напряжением 110 кВ) отработало более 50 лет;`;
+        const getThirdListItem = () => `воздушные линии электропередачи 110 кВ протяженностью 1396,9 км в одноцепном исчислении (84,2% от общей протяженности ВЛ 110 кВ) отработали более 50 лет;`;
+        const getFourthListItem = () => `кабельные линии электропередачи 110 кВ протяженностью 82,1 км (100% от общей протяженности КЛ 110 кВ) находятся в эксплуатации от 2 до 14 лет.`;
+        //summary
+        const getThirdFirmPar = () => `Наиболее продолжительное время эксплуатируются ПС 110 кВ Северная – срок службы 68 лет, ПС 110 кВ Западная – 67 лет, ПС 110 кВ Восточная – 64 года, ПС 110 кВ Южная – 63 года.`;
+        const getFourthFirmPar = () => `Наиболее продолжительное время находятся в эксплуатации следующие линии электропередачи 110 кВ: ВЛ 110 кВ ПС1 – ПС2 I цепь (А-1), ВЛ 110 кВ ПС1 – ПС2 II цепь (А-2), 69 лет, … .`;
+        const getFifthFirmPar = (name) => `На рисунке 1.1 приведена возрастная структура линий электропередачи и подстанций 110 кВ [энергосистемы] по состоянию на 01.01.2019 г., обслуживаемых ${name}.`;
+        //imgs
+        function getCurrentDate() {
+            var today = new Date();
+            var dd = String(today.getDate()).padStart(2, '0');
+            var mm = String(today.getMonth() + 1).padStart(2, '0');
+            var yyyy = today.getFullYear();
+
+            return dd + '.' + mm + '.' + yyyy;
+        }
+        const getImgDescription = (number, name) => `Рисунок ${number} – Возрастная характеристика ВЛ, КЛ и ПС 110 кВ ${name} на ${getCurrentDate()} г.`;
+        ///
+        ///
+        ///
+
+        function addMainSection(doc) {
+            const firmLinks = ["fimg.png", "simg.png", "timg.png", "fourthimg.png"];
+
+            const firstCompany = getCompanySection(docCompanyNameOne);
+            const firstFirm = getFirmSection(doc, docFirmNameOne, docCompanyNameOne, firmLinks);
+
+            doc.addSection({
+                children: [
+                    getParaphaphByText(docMainHeader, 0, 0, true),
+                    ...firstCompany,
+                    ...firstFirm
+                ]
+            });
+        }
+
+        function getCompanySection(companyName) {
+            return [
+                getParaphaphByText(companyName, 0, 0, true),
+                getParaphaphByText(getFirstCompPar(companyName), 0, 300),
+                getTable(6789.1, 89.1, 123, 4567),
+                getParaphaphByText(getSecondCompPar(companyName), 300, 300)
+            ];
+        }
+
+        function getFirmSection(doc, firmName, compName, firmLinks) {
+            return [
+                getParaphaphByText(getFirmHeader(compName, firmName), 0, 0, true),
+                getParaphaphByText(getFirstFirmPar(firmName), 0, 300),
+                getTable(1234.5, 67.8, 55, 4433),
+                getParaphaphByText(getSecondFirmPar(firmName), 300, 200),
+                ...getListItems(getFirstListItem(), getSecondListItem(), getThirdListItem(), getFourthListItem()),
+                getParaphaphByText(getThirdFirmPar(firmName), 300, 0),
+                getParaphaphByText(getFourthFirmPar(firmName)),
+                getParaphaphByText(getFifthFirmPar(firmName)),
+                //...getFirmImages(doc, ...firmLinks),
+                //getParaphaphByText(getImgDescription("1.1", firmName), 0, 0, true)
+            ];
+        }
+
+        function getFirmImages(doc, fr, sec, th, fourth) {
+            const firstImage = Media.addImage(doc, fs.readFileSync(fr), 300, 300);
+            const secondImage = Media.addImage(doc, fs.readFileSync(sec), 300, 300);
+            const thirdImage = Media.addImage(doc, fs.readFileSync(th), 300, 300);
+            const fourthImage = Media.addImage(doc, fs.readFileSync(fourth), 300, 300);
+
+            return [new Paragraph({ children: [firstImage, secondImage] }),
+            new Paragraph({ children: [thirdImage, fourthImage] })];
+        }
+
+        function getParaphaphByText(text, spaceBefore = 0, spaceAfter = 0, isBold = false) {
+            return new Paragraph({
+                children: [
+                    new TextRun({
+                        text: "\t" + text,
+                        size: 24,
+                        bold: isBold
+                    })
+                ],
+                spacing: {
+                    before: spaceBefore,
+                    after: spaceAfter
+                }
+            });
+        }
+
+        function getTable(ff, fs, sf, ss) {
+            return new Table({
+                rows: [
+                    new TableRow({
+                        children: [
+                            new TableCell({
+                                children: [getParaphaphByText(tableFirstRowFirstCell)]
+                            }),
+                            new TableCell({
+                                children: [getParaphaphByText(getSecondCell(ff, fs))]
+                            })
+                        ]
+                    }),
+                    new TableRow({
+                        children: [
+                            new TableCell({
+                                children: [getParaphaphByText(tableSecondRowFirstCell)]
+                            }),
+                            new TableCell({
+                                children: [getParaphaphByText(getFourthCell(sf, ss))]
+                            })
+                        ]
+                    })
+                ],
+            });
+        }
+
+        function getListItems(first, second, third, fourth) {
+            return [getListParagraph(first), getListParagraph(second),
+            getListParagraph(third), getListParagraph(fourth)];
+        }
+
+        function getListParagraph(text) {
+            return new Paragraph({
+                children: [
+                    new TextRun({
+                        text: "\t" + text,
+                        size: 24,
+                    })
+                ],
+                bullet: {
+                    level: 0
+                }
+            });
+        }
+        function saveDocToFile(path, doc) {
+            // Packer.toBuffer(doc).then((buffer) => {
+            //     fs.writeFileSync(path, buffer);
+            // });
+            // Packer.toBlob(doc).then(blob => {
+            //     console.log(blob);
+            //     saveAs(blob, "example.docx");
+            //     console.log("Document created successfully");
+            // });
+        }
+
+
+
+addMainSection(doc, docMainHeader);
+
+saveDocToFile("My Document.docx", doc);
+
+
+
